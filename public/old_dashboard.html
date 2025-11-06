@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Dashboard | SmartTask</title>
+</head>
+<body class="bg-gray-50 p-6">
+  <div class="max-w-3xl mx-auto bg-white rounded shadow p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-semibold">SmartTask Dashboard</h1>
+      <div>
+        <span id="userName" class="mr-4"></span>
+        <button id="logoutBtn" class="bg-red-600 text-white px-3 py-1 rounded">Logout</button>
+      </div>
+    </div>
+
+    <form id="taskForm" class="flex gap-2 mb-6">
+      <input id="taskInput" type="text" placeholder="Add a new task..." 
+             class="flex-1 border p-2 rounded" required>
+      <button class="bg-blue-600 text-white px-4 rounded hover:bg-blue-700">Add</button>
+    </form>
+
+    <ul id="taskList" class="space-y-2"></ul>
+  </div>
+
+  <script src="assets/main.js"></script>
+  <script>
+    const name = localStorage.getItem("name");
+    const token = getToken();
+    if (!token) location.href = "index.html";
+    document.getElementById("userName").textContent = name;
+
+    document.getElementById("logoutBtn").onclick = logout;
+
+    async function loadTasks() {
+      try {
+        const tasks = await apiFetch("/getTasks");
+        renderTasks(tasks);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function addTask(text) {
+      await apiFetch("/addTask", {
+        method: "POST",
+        body: JSON.stringify({ text })
+      });
+      await loadTasks();
+    }
+
+    async function deleteTask(id) {
+      await apiFetch(`/deleteTask/${id}`, { method: "DELETE" });
+      await loadTasks();
+    }
+
+    async function toggleTask(id, done) {
+      await apiFetch(`/updateTask/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ done })
+      });
+      await loadTasks();
+    }
+
+    function renderTasks(tasks) {
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+      tasks.forEach(t => {
+        const li = document.createElement("li");
+        li.className = "flex justify-between items-center border rounded p-2";
+        li.innerHTML = `
+          <div>
+            <input type="checkbox" ${t.done ? "checked" : ""} data-id="${t._id}" class="mr-2">
+            <span class="${t.done ? 'line-through text-gray-500' : ''}">${t.text}</span>
+          </div>
+          <button data-del="${t._id}" class="text-red-600 text-sm">Delete</button>
+        `;
+        list.appendChild(li);
+      });
+
+      list.querySelectorAll("[data-del]").forEach(btn => {
+        btn.onclick = () => deleteTask(btn.dataset.del);
+      });
+
+      list.querySelectorAll("input[type='checkbox']").forEach(cb => {
+        cb.onchange = () => toggleTask(cb.dataset.id, cb.checked);
+      });
+    }
+
+    document.getElementById("taskForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = document.getElementById("taskInput").value.trim();
+      if (!text) return;
+      await addTask(text);
+      e.target.reset();
+    });
+
+    loadTasks();
+  </script>
+</body>
+</html>

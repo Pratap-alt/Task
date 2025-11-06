@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Signup | SmartTask</title>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+    <h1 class="text-2xl mb-4 text-center font-semibold">Create Account</h1>
+    <form id="signupForm" class="space-y-4">
+      <input id="name" type="text" placeholder="Full Name" class="w-full border p-2 rounded" required>
+      <input id="email" type="email" placeholder="Email" class="w-full border p-2 rounded" required>
+      <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded" required>
+      <button class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Sign Up</button>
+    </form>
+    <p class="mt-4 text-center text-sm">Already have an account? 
+      <a href="index.html" class="text-blue-600 underline">Login</a>
+    </p>
+  </div>
+
+  <script src="assets/main.js"></script>
+  <script>
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch(API + "/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Signup failed");
+
+        alert("Account created! Please log in.");
+        location.href = "index.html";
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>
