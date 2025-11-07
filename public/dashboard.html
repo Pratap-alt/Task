@@ -181,7 +181,7 @@
       taskInput.disabled = true;
 
       try {
-        await Fetch(API+ "addTask", {
+        await fetch(API+ "addTask", {
           method: "POST",
           body: JSON.stringify({ text })
         });
