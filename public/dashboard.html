@@ -161,7 +161,7 @@
       showLoadingState();
       
       try {
-        const taskData = await Fetch(API+"getTasks");
+        const taskData = await fetch(API+"getTasks");
         tasks = taskData || [];
         renderTasks();
       } catch (err) {
