@@ -1,6 +1,5 @@
-// frontend/assets/main.js
-// const API = "https://bruhmantri.vercel.app/api/"; 
 const API = "api/"
+
 
 function saveToken(token, name) {
   localStorage.setItem("token", token);
@@ -19,7 +18,6 @@ function logout() {
 
 async function apiFetch(url, options = {}) {
   const token = getToken(); // Make sure this function gets the token from localStorage
-  
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -27,20 +25,20 @@ async function apiFetch(url, options = {}) {
     },
     ...options
   };
-
+  
   // Add Authorization header if token exists
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
+  
   try {
-    const response = await fetch(url, config);
+    const response = await fetch(API + url, config);
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
     
-    return await response.json();
+    return await response;
   } catch (error) {
     console.error('Fetch error:', error);
     throw error;

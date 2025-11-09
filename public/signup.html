@@ -1,48 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
   <title>Signup | SmartTask</title>
+
+  <style>
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 6px;
+      color: white;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
-    <h1 class="text-2xl mb-4 text-center font-semibold">Create Account</h1>
-    <form id="signupForm" class="space-y-4">
-      <input id="name" type="text" placeholder="Full Name" class="w-full border p-2 rounded" required>
-      <input id="email" type="email" placeholder="Email" class="w-full border p-2 rounded" required>
-      <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded" required>
-      <button class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Sign Up</button>
+
+<body class="bg-gray-50 min-h-screen p-6">
+  <div class="max-w-md mx-auto bg-white rounded-lg shadow-sm border p-8 fade-in">
+    <!-- Header -->
+    <div class="text-center mb-8 border-b pb-5">
+      <h1 class="text-3xl font-bold text-gray-800">Create Account</h1>
+      <p class="text-gray-600 mt-1">Join SmartTask today</p>
+    </div>
+
+    <!-- Signup Form -->
+    <form id="signupForm" class="space-y-6">
+      <div>
+        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+        <input
+          id="name"
+          type="text"
+          required
+          placeholder="Enter your name"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <div id="nameError" class="hidden text-red-600 text-sm mt-1">Name must be at least 2 characters.</div>
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input
+          id="email"
+          type="email"
+          required
+          placeholder="Enter your email"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <div id="emailError" class="hidden text-red-600 text-sm mt-1">Please enter a valid email.</div>
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input
+          id="password"
+          type="password"
+          required
+          placeholder="Create a password"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <div id="passwordError" class="hidden text-red-600 text-sm mt-1">Password must be at least 6 characters.</div>
+      </div>
+
+      <button
+        id="signupBtn"
+        type="submit"
+        class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+      >
+        <span id="signupBtnText">Sign Up</span>
+        <svg id="signupSpinner" class="hidden w-5 h-5 spinner" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </button>
+
+      <p class="text-center text-gray-600 text-sm">
+        Already have an account?
+        <a href="index.html" class="text-blue-600 hover:underline font-medium">Login</a>
+      </p>
     </form>
-    <p class="mt-4 text-center text-sm">Already have an account? 
-      <a href="index.html" class="text-blue-600 underline">Login</a>
-    </p>
   </div>
 
   <script src="assets/main.js"></script>
   <script>
-    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+    const form = document.getElementById('signupForm');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const btn = document.getElementById('signupBtn');
+    const btnText = document.getElementById('signupBtnText');
+    const spinner = document.getElementById('signupSpinner');
+    const nameError = document.getElementById('nameError');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    let isLoading = false;
+
+    form.addEventListener('submit', handleSignup);
+    nameInput.addEventListener('blur', validateName);
+    emailInput.addEventListener('blur', validateEmail);
+    passwordInput.addEventListener('blur', validatePassword);
+
+    function validateName() {
+      const value = nameInput.value.trim();
+      const valid = value.length >= 2;
+      nameError.classList.toggle('hidden', valid || !value);
+      return valid;
+    }
+
+    function validateEmail() {
+      const value = emailInput.value.trim();
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      emailError.classList.toggle('hidden', valid || !value);
+      return valid;
+    }
+
+    function validatePassword() {
+      const value = passwordInput.value;
+      const valid = value.length >= 1;
+      passwordError.classList.toggle('hidden', valid || !value);
+      return valid;
+    }
+
+    async function handleSignup(e) {
       e.preventDefault();
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      if (isLoading) return;
+
+      const validName = validateName();
+      const validEmail = validateEmail();
+      const validPass = validatePassword();
+      if (!validName || !validEmail || !validPass) {
+        showNotification('Please fix the highlighted errors.', 'error');
+        return;
+      }
+
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      setLoading(true);
 
       try {
-        const res = await fetch(API + "/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch(API + 'register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, password })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Signup failed");
 
-        alert("Account created! Please log in.");
-        location.href = "index.html";
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Signup failed');
+
+        showNotification('Account created! Redirecting to login...', 'success');
+        setTimeout(() => (location.href = 'index.html'), 1500);
       } catch (err) {
-        alert(err.message);
+        console.error(err);
+        showNotification(err.message || 'Something went wrong.', 'error');
+      } finally {
+        setLoading(false);
       }
-    });
+    }
+
+    function setLoading(state) {
+      isLoading = state;
+      if (state) {
+        btnText.textContent = 'Creating Account...';
+        spinner.classList.remove('hidden');
+        btn.disabled = true;
+        btn.classList.add('opacity-70');
+      } else {
+        btnText.textContent = 'Sign Up';
+        spinner.classList.add('hidden');
+        btn.disabled = false;
+        btn.classList.remove('opacity-70');
+      }
+    }
+
+    function showNotification(message, type = 'info') {
+      document.querySelectorAll('.notification').forEach(n => n.remove());
+      const div = document.createElement('div');
+      div.className = `notification ${
+        type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-green-600' : 'bg-blue-600'
+      }`;
+      div.textContent = message;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
   </script>
 </body>
 </html>
